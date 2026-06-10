@@ -403,14 +403,130 @@ box(s,0,0,13.333,7.5,fill=NAVY)
 box(s,0,4.6,13.333,2.9,fill=RGBColor(0x0A,0x1E,0x3C))
 box(s,5.9,0.95,1.5,1.5,fill=GOLD,round=True)
 txt(s,5.9,0.97,1.5,1.5,[[("SS",34,NAVY,True)]],align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE)
-txt(s,1.0,2.7,11.3,1.2,[[("Every deadline met is a student who proved they could.",30,WHITE,True)],
+txt(s,1.0,2.5,11.3,1.2,[[("Every deadline met is a student who proved they could.",30,WHITE,True)],
                         [("We just give them the reason to start.",30,GOLDL,True)]],align=PP_ALIGN.CENTER,line_sp=1.05)
+txt(s,1.0,3.95,11.3,0.5,[[("Thank you  ·  Questions & Answers welcome",17,RGBColor(0xC5,0xDA,0xF0),True)]],align=PP_ALIGN.CENTER)
 for i,(v,l) in enumerate([("6","Interviews"),("4","Key Insights"),("5","Pilot Users"),("100%","Positive Feedback")]):
     bx=1.7+i*2.6
     txt(s,bx,4.85,2.3,0.7,[[(v,40,GOLDL,True)]],align=PP_ALIGN.CENTER)
     txt(s,bx,5.7,2.3,0.4,[[(l,14,WHITE,False)]],align=PP_ALIGN.CENTER)
 txt(s,1.0,6.5,11.3,0.5,[[("StudyStrike — Compete. Excel. Succeed.   |   FWS310, Spring 2025–2026   |   Instructor: Abdelrahman El Adly",12,RGBColor(0x9F,0xC3,0xE8),False)]],align=PP_ALIGN.CENTER)
 
+# ════════════════════ NEW: EXISTING SOLUTIONS & DRAWBACKS ════════════════════
+s=slide()
+header(s,"WHY CURRENT TOOLS FAIL","Plenty of tools exist — none convert academic intent into action")
+rows=[("Existing solution","Its drawback","Who it fails"),
+      ("Planner & list apps  (Todoist, Notion)","High manual upkeep — abandoned within days","Busy commuters & working students"),
+      ("Focus apps  (Forest, Pomodoro timers)","Track time, but no link to grades or deadlines","Students who need real stakes"),
+      ("LMS portals  (Blackboard, MyADU)","Show deadlines, offer zero motivation or guidance","Chronic procrastinators"),
+      ("Gamified habit apps  (Habitica, Duolingo)","Fun, but disconnected from real academic work","Course-focused students"),
+      ("Reminder / notification apps","Notify — but never prompt the next action","Anxiety-driven avoiders")]
+cols=[0.55,5.3,9.35]; widths=[4.65,3.95,3.43]
+for ri,row in enumerate(rows):
+    by=1.85+ri*0.78; hdr=ri==0
+    for ci,cell in enumerate(row):
+        fill=NAVY if hdr else WHITE
+        box(s,cols[ci],by,widths[ci],0.72,fill=fill,line=BORDER)
+        col=WHITE if hdr else (TEXT if ci==0 else (RED if ci==1 else GREY))
+        bold=hdr or ci==0
+        txt(s,cols[ci]+0.15,by,widths[ci]-0.3,0.72,[[(cell,12.5,col,bold)]],anchor=MSO_ANCHOR.MIDDLE,line_sp=1.0)
+box(s,0.55,6.6,12.2,0.6,fill=TEALBG,line=BORDER,round=True)
+txt(s,0.55,6.6,12.2,0.6,[[("Every competitor fails on one of three fronts: ",13,TEXT,False),("maintenance, stakes, or motivation",13,TEAL,True),(".  StudyStrike fixes all three.",13,TEXT,False)]],align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE)
+
+# ════════════════════ NEW: MVP ════════════════════
+s=slide()
+header(s,"OUR MVP","A working web platform — built, running, and pilot-tested")
+box(s,0.55,1.9,6.0,4.7,fill=NAVY,round=True)
+txt(s,0.9,2.3,5.35,2.6,[[("StudyStrike is a functional web app today —",22,WHITE,True)],
+    [("",8,WHITE,False)],
+    [("not a mock-up. Students log in, study under verified focus, earn points, and climb a live per-course leaderboard.",18,GOLDL,True)]],line_sp=1.1)
+box(s,0.9,5.5,5.3,0.85,fill=RGBColor(0x14,0x3E,0x78),round=True)
+txt(s,0.9,5.5,5.3,0.85,[[("✓  Validated with a 5-student, 1-week pilot",13.5,WHITE,True)]],align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE)
+txt(s,6.85,1.95,6.0,0.4,[[("What's in the MVP",15,TEXT,True)]])
+comp=[("🔒","Verified Focus Monitor","webcam + screen presence confirm real focus"),
+      ("🏆","Grade-linked Leaderboard","live weekly rankings, up to +2% grade bonus"),
+      ("📋","Smart Task Prioritiser","auto-sorted by urgency, with progress bars"),
+      ("🧑‍🏫","Instructor Dashboard","progress, focus %, and at-risk flags")]
+for i,(ic,t,d) in enumerate(comp):
+    by=2.4+i*0.78
+    box(s,6.85,by,6.0,0.68,fill=WHITE,line=BORDER,round=True)
+    txt(s,7.0,by,0.6,0.68,[[(ic,18,NAVY,True)]],align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE)
+    txt(s,7.6,by+0.05,5.1,0.6,[[(t+"  ",13,NAVY,True),("— "+d,11.5,GREY,False)]],anchor=MSO_ANCHOR.MIDDLE,line_sp=0.95)
+txt(s,6.85,5.6,6.0,0.4,[[("Intentionally out of scope (next phases):",12,GREY,True)]])
+txt(s,6.85,5.95,6.0,0.6,[[("native mobile app · full LMS API · AI task-duration model",12,GREY,False)]])
+
+# ════════════════════ NEW: BUSINESS MODEL OVERVIEW ════════════════════
+s=slide()
+header(s,"BUSINESS MODEL","How we create and capture value")
+# Left: who + how we reach
+box(s,0.55,1.95,5.0,4.6,fill=WHITE,line=BORDER,round=True)
+txt(s,0.8,2.15,4.5,0.4,[[("Who we serve",15,NAVY,True)]])
+for i,(t,d) in enumerate([("B2C — UAE university students","Freemium app; premium upgrade for power users"),
+                          ("B2B — Universities","Institutional licence per enrolled student")]):
+    by=2.65+i*1.0
+    box(s,0.8,by,4.5,0.85,fill=BG,line=BORDER,round=True)
+    txt(s,0.95,by+0.1,4.2,0.7,[[(t,13,NAVY,True)],[(d,11.5,GREY,False)]],line_sp=1.0)
+txt(s,0.8,4.85,4.5,0.4,[[("How we reach them",15,NAVY,True)]])
+txt(s,0.8,5.25,4.6,1.2,[[("•  University partnerships & pilots",12.5,TEXT,False)],
+                        [("•  Web platform (self-serve sign-up)",12.5,TEXT,False)],
+                        [("•  Social — TikTok / Instagram student communities",12.5,TEXT,False)]],line_sp=1.15)
+# Right: revenue tiers
+txt(s,5.85,1.95,7.0,0.4,[[("Revenue streams",15,NAVY,True)]])
+tiers=[("Free","Core tasks + streaks","AED 0",GREY),
+       ("Premium","Predictions, focus mode, sync","AED 29 / mo",TEAL),
+       ("Institutional","Full platform per university","AED 15 / student / yr",NAVY2)]
+for i,(t,d,p,col) in enumerate(tiers):
+    by=2.4+i*1.05
+    box(s,5.85,by,7.0,0.92,fill=WHITE,line=BORDER,round=True)
+    box(s,5.85,by,0.12,0.92,fill=col)
+    txt(s,6.15,by+0.12,3.0,0.7,[[(t,15,NAVY,True)],[(d,11.5,GREY,False)]],line_sp=1.0)
+    txt(s,9.2,by,3.5,0.92,[[(p,17,col,True)]],align=PP_ALIGN.RIGHT,anchor=MSO_ANCHOR.MIDDLE)
+box(s,5.85,5.65,7.0,0.85,fill=TEALBG,line=BORDER,round=True)
+txt(s,6.05,5.65,6.7,0.85,[[("Unit economics: ",12.5,TEXT,True),("low marginal cost per user (cloud-hosted SaaS) → freemium funnel converts to premium & institutional revenue.",12.5,GREY,False)]],anchor=MSO_ANCHOR.MIDDLE,line_sp=1.0)
+
+# ════════════════════ NEW: BUSINESS MODEL CANVAS ════════════════════
+s=slide()
+header(s,"BUSINESS MODEL CANVAS","The full picture on one page")
+def bmc(x,y,w,h,title,items,accent=NAVY2):
+    box(s,x,y,w,h,fill=WHITE,line=BORDER)
+    box(s,x,y,0.07,h,fill=accent)
+    txt(s,x+0.16,y+0.08,w-0.22,0.32,[[(title,10.5,NAVY,True)]])
+    rows=[[("•  "+it,9.3,TEXT,False)] for it in items]
+    txt(s,x+0.16,y+0.42,w-0.26,h-0.46,rows,line_sp=1.0,sp_after=2)
+TY=1.7; TH=3.45; BY=5.25; BH=1.5
+c=[0.55,3.0,5.45,7.9,10.35]; cw=2.38
+# top row 5 columns
+bmc(c[0],TY,cw,TH,"KEY PARTNERS",["Universities (ADU etc.)","LMS providers (Blackboard)","Cloud / IT infrastructure"],NAVY2)
+bmc(c[1],TY,cw,TH/2-0.05,"KEY ACTIVITIES",["Platform dev & maintenance","LMS integration","Student onboarding"],TEAL)
+bmc(c[1],TY+TH/2+0.05,cw,TH/2-0.05,"KEY RESOURCES",["Engineering team","Verified-focus technology","Student community & data"],TEAL)
+bmc(c[2],TY,cw,TH,"VALUE PROPOSITIONS",["Verified effort → real grade bonuses","One zero-maintenance deadline view","Competition that builds study habit"],GOLD)
+bmc(c[3],TY,cw,TH/2-0.05,"CUSTOMER RELATIONSHIPS",["Self-serve app","In-app support","Community leaderboards"],TEAL)
+bmc(c[3],TY+TH/2+0.05,cw,TH/2-0.05,"CHANNELS",["University partnerships","Web platform","Social (TikTok / IG)"],TEAL)
+bmc(c[4],TY,cw,TH,"CUSTOMER SEGMENTS",["UAE university students (B2C)","Universities (B2B licensing)","Procrastination-prone learners"],NAVY2)
+# bottom row 2 blocks
+bmc(0.55,BY,6.0,BH,"COST STRUCTURE",["Development & hosting","Marketing & user acquisition","Customer support"],RED)
+bmc(6.73,BY,6.05,BH,"REVENUE STREAMS",["Premium subscription — AED 29/mo","Institutional licence — AED 15/student/yr","Free tier (top of funnel)"],GOLD)
+
+# ════════════════════ FINALISE: reorder to the requested narrative flow ════════════════════
+# Creation order indices (0-based):
+#  0 Title 1 Problem 2 Insights 3 GoldenCircle 4 Introducing 5 CoreFeatures
+#  6 Workflow 7 Proto1 8 Proto2 9 Pilot 10 ValueProp 11 Market 12 Positioning
+#  13 CustomerDev 14 Learn&Adapt 15 Roadmap 16 Close
+#  17 ExistingSolutions 18 MVP 19 BizModelOverview 20 BizModelCanvas
+# Desired flow (Problem → why tools fail → why → MVP → how → proof → value → validation →
+#  market → customers → positioning → business model → canvas → learning → roadmap → close).
+order=[0,1,17,3,18,6,5,7,8,10,9,11,13,12,19,20,14,15,16]   # drops 2 (Insights) & 4 (Introducing)
+sldIdLst=prs.slides._sldIdLst
+ids=list(sldIdLst)
+# Drop the two unused slides cleanly (remove their relationship + element).
+for drop_idx in (2,4):
+    prs.part.drop_rel(ids[drop_idx].rId)
+keep=[ids[i] for i in order]
+for el in list(sldIdLst):
+    sldIdLst.remove(el)
+for el in keep:
+    sldIdLst.append(el)
+
 out=os.path.join(HERE,"StudyStrike_Redesigned.pptx")
 prs.save(out)
-print("Saved:",out,"·",len(prs.slides._sldIdLst),"slides")
+print("Saved:",out,"·",len(prs.slides._sldIdLst),"slides in new order")
