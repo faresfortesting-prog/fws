@@ -1,0 +1,27 @@
+{
+  "name": "studystrike",
+  "version": "1.0.0",
+  "description": "StudyStrike — full-stack student/instructor/admin academic dashboard system",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node src/db/migrate.js",
+    "seed": "node src/db/seed.js",
+    "reset": "node src/db/migrate.js && node src/db/seed.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:39993/git/faresfortesting-prog/fws"
+  },
+  "keywords": ["education", "dashboard", "express", "sqlite"],
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.10.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
+  }
+}

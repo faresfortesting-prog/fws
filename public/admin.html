@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyStrike — Admin</title>
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="brand-icon">⚡</div>
+      <div><div class="brand-name">StudyStrike</div><div class="brand-sub">Admin</div></div></div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="overview">📊 Overview</button>
+      <button class="nav-item" data-view="users">👥 Users</button>
+      <button class="nav-item" data-view="audit">🗂️ Audit Log</button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="user-mini"><b id="sideName">—</b><span id="sideEmail"></span></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%" onclick="logout()">Sign out</button>
+    </div>
+  </aside>
+  <div class="content">
+    <div class="topbar"><div style="display:flex;align-items:center;gap:.75rem">
+      <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <h1 id="pageTitle">Overview</h1></div>
+      <button class="btn btn-teal btn-sm" onclick="document.getElementById('userOverlay').classList.add('open')">+ New User</button>
+    </div>
+    <div class="page">
+      <div class="view active" id="overview"><div class="kpi-grid" id="ovKpis"></div></div>
+      <div class="view" id="users"><div class="card"><div class="sec-title">All users</div><div id="userList"></div></div></div>
+      <div class="view" id="audit"><div class="card"><div class="sec-title">System audit log</div><div id="auditList"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="userOverlay"><div class="modal">
+  <h3>New User</h3>
+  <div class="field"><label>Full name</label><input id="uName"></div>
+  <div class="field"><label>Email</label><input id="uEmail" type="email"></div>
+  <div class="field"><label>Password</label><input id="uPass" type="password"></div>
+  <div class="field"><label>Role</label><select id="uRole"><option>student</option><option>instructor</option><option>admin</option></select></div>
+  <div class="modal-actions"><button class="btn btn-ghost" onclick="document.getElementById('userOverlay').classList.remove('open')">Cancel</button>
+    <button class="btn btn-teal" onclick="createUser()">Create</button></div>
+</div></div>
+
+<script src="/js/api.js"></script>
+<script>
+let ME;
+async function boot() {
+  ME = await requireUser(['admin']); if (!ME) return;
+  document.getElementById('sideName').textContent = ME.full_name;
+  document.getElementById('sideEmail').textContent = ME.email;
+  document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
+  show('overview');
+}
+function show(v) {
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === v));
+  document.getElementById(v).classList.add('active');
+  document.getElementById('pageTitle').textContent = v[0].toUpperCase() + v.slice(1);
+  document.getElementById('sidebar').classList.remove('open');
+  ({ overview: loadStats, users: loadUsers, audit: loadAudit }[v])();
+}
+async function loadStats() {
+  const s = await API.get('/admin/stats');
+  document.getElementById('ovKpis').innerHTML = Object.entries(s).map(([k, v]) =>
+    `<div class="kpi-card"><div class="label">${k.replace('_', ' ')}</div><div class="value">${v}</div></div>`).join('');
+}
+async function loadUsers() {
+  const rows = await API.get('/admin/users');
+  document.getElementById('userList').innerHTML = `<table><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>` +
+    rows.map(u => `<tr><td>${esc(u.full_name)}</td><td>${esc(u.email)}</td>
+      <td><span class="pill pill-navy">${u.role}</span></td>
+      <td><span class="pill ${u.status === 'active' ? 'pill-green' : u.status === 'suspended' ? 'pill-red' : 'pill-amber'}">${u.status}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="toggleStatus(${u.id},'${u.status}')">${u.status === 'active' ? 'Suspend' : 'Activate'}</button>
+        <button class="btn btn-danger btn-sm" onclick="delUser(${u.id})">Delete</button></td></tr>`).join('') + '</table>';
+}
+async function toggleStatus(id, status) {
+  await API.patch('/admin/users/' + id, { status: status === 'active' ? 'suspended' : 'active' });
+  toast('Updated', 'success'); loadUsers();
+}
+async function delUser(id) { if (!confirm('Delete user?')) return; try { await API.del('/admin/users/' + id); toast('Deleted', 'success'); loadUsers(); } catch (e) { toast(e.message, 'error'); } }
+async function createUser() {
+  try {
+    await API.post('/admin/users', { full_name: document.getElementById('uName').value.trim(),
+      email: document.getElementById('uEmail').value.trim(), password: document.getElementById('uPass').value,
+      role: document.getElementById('uRole').value });
+    document.getElementById('userOverlay').classList.remove('open'); toast('User created', 'success'); loadUsers();
+  } catch (e) { toast(e.message, 'error'); }
+}
+async function loadAudit() {
+  const rows = await API.get('/admin/audit-log');
+  document.getElementById('auditList').innerHTML = rows.length ? `<table><tr><th>Actor</th><th>Action</th><th>Target</th><th>When</th></tr>` +
+    rows.map(a => `<tr><td>${esc(a.actor_name || '—')}</td><td>${esc(a.action)}</td><td>${esc(a.target_type || '')} ${a.target_id || ''}</td><td>${new Date(a.created_at).toLocaleString()}</td></tr>`).join('') + '</table>'
+    : '<div class="empty">No actions yet.</div>';
+}
+boot();
+</script>
+</body>
+</html>

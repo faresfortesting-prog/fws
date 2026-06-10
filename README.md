@@ -1,0 +1,166 @@
+# ⚡ StudyStrike — Full-Stack Academic Dashboard
+
+A production-ready student / instructor / admin dashboard system. Students log
+gamified, focus-verified study sessions; instructors manage classes, tasks,
+points and privacy-safe verification; admins manage the whole platform.
+
+This replaces the original single-file HTML prototype (and its temporary
+in-memory `CLASS_DB`) with a real backend API, a persistent SQLite database,
+hashed passwords, JWT auth and backend-enforced role-based permissions.
+
+---
+
+## ✨ Features
+
+- **Three roles** — student, instructor, admin — with role-based access control.
+- **Secure auth** — bcrypt password hashing, JWT sessions (cookie + bearer).
+- **Real database** — SQLite schema with 14 tables, migrations + seed data.
+- **Instructor dashboard** — overview KPIs, class/course/task management,
+  student monitoring, verification review, points & audit log, announcements,
+  messaging, CSV reports.
+- **Student dashboard** — enrolled classes only, instructor-created tasks,
+  leaderboard, announcements, instructor feedback, messages, privacy page, and
+  a webcam + screen-share focus monitor that syncs progress after each session.
+- **Privacy by design** — no raw webcam/screen video is ever stored. Screen
+  frames are analysed server-side and discarded; only `{compliant, reason}`
+  summaries and event logs are persisted. The Anthropic API key stays on the
+  server and is never exposed to the browser.
+- **Backend-enforced permissions** — every protected route checks ownership and
+  per-class `instructor_permissions`. Sensitive actions are written to audit logs.
+
+---
+
+## 🚀 Run locally
+
+### 1. Prerequisites
+- Node.js 18+ (tested on Node 22)
+
+### 2. Install
+```bash
+npm install
+```
+
+### 3. Configure environment
+```bash
+cp .env.example .env
+# Edit .env — at minimum set a strong JWT_SECRET.
+# (Optional) set ANTHROPIC_API_KEY to enable AI screen-content checks.
+```
+
+### 4. Create the database + seed demo data
+```bash
+npm run reset      # runs migrate + seed
+# or individually:
+npm run migrate
+npm run seed
+```
+
+### 5. Start the server
+```bash
+npm start          # http://localhost:4000
+# or: npm run dev  (auto-restart on change)
+```
+
+Open **http://localhost:4000** and sign in.
+
+---
+
+## 🔑 Demo accounts (seed)
+
+| Role       | Email                       | Password   |
+|------------|-----------------------------|------------|
+| Admin      | `admin@studystrike.io`      | `admin123` |
+| Instructor | `instructor@studystrike.io` | `admin123` |
+| Student    | `student@cs101`             | `pass123`  |
+| Student    | `student@math401`           | `pass123`  |
+| Student    | `student@chem301`           | `pass123`  |
+
+Demo class join codes: **`SS-CS101A`**, **`SS-MTH401`**.
+
+> In production set `SEED_DEMO_DATA=false` so demo credentials are never created.
+
+---
+
+## 🗂️ Project structure
+
+```
+src/
+  config.js              # env loader + typed config
+  server.js              # Express app, route mounting, static serving
+  db/
+    schema.sql           # full database schema (14 tables)
+    index.js             # SQLite connection + migrate()
+    migrate.js           # CLI: create tables
+    seed.js              # CLI: demo users/courses/classes/tasks
+  middleware/auth.js     # requireAuth + requireRole (RBAC)
+  utils/
+    auth.js              # hashing + JWT
+    helpers.js           # audit log, permissions, join codes, validators
+    aiVerify.js          # server-side screen-content check (key stays here)
+  routes/
+    auth.js              # /auth/register, /auth/login, /auth/logout, /me
+    instructor.js        # /instructor/dashboard, classes, courses, verification
+    classes.js           # /classes/:id join-code, students, leaderboard, tasks
+    tasks.js             # /tasks/:id edit, duplicate, delete
+    students.js          # join-class, progress, sessions, my classes/tasks
+    studySessions.js     # /study-sessions create/end + screen check
+    verification.js      # /verification-events (summaries only)
+    social.js            # /announcements, /messages
+    reports.js           # /reports/*, /points/adjust, /points/audit
+    admin.js             # /admin/users, stats, audit-log
+public/
+  index.html             # login + register (student/instructor/admin)
+  student.html  + js/student.js
+  instructor.html + js/instructor.js
+  admin.html
+  css/styles.css         # navy/teal/gold identity, sidebar, KPIs, states
+  js/api.js              # fetch client + toast/escape helpers
+```
+
+---
+
+## 🔌 API overview
+
+Auth: `POST /auth/register` · `POST /auth/login` · `POST /auth/logout` · `GET /me`
+
+Instructor: `GET /instructor/dashboard` · `GET/POST /instructor/classes` ·
+`PATCH/DELETE /instructor/classes/:id` · `GET/POST /instructor/courses` ·
+`GET /instructor/verification-events` · `GET /instructor/audit-log`
+
+Classes: `POST /classes/:id/join-code` · `GET /classes/:id/students` ·
+`GET /classes/:id/leaderboard` · `GET/POST /classes/:id/tasks`
+
+Tasks: `PATCH /tasks/:id` · `POST /tasks/:id/duplicate` · `DELETE /tasks/:id`
+
+Students: `POST /students/join-class` · `GET /students/me/classes` ·
+`GET /students/me/tasks` · `GET /students/:id/progress` · `GET /students/:id/sessions`
+
+Sessions: `POST /study-sessions` · `PATCH /study-sessions/:id/end` ·
+`POST /study-sessions/:id/check-screen` · `POST /verification-events`
+
+Social: `GET/POST /announcements` · `GET/POST /messages`
+
+Reports & points: `GET /reports/class/:id` · `GET /reports/student/:id` ·
+`POST /points/adjust` · `GET /points/audit/:studentId`
+
+Admin: `GET/POST /admin/users` · `PATCH/DELETE /admin/users/:id` ·
+`GET /admin/stats` · `GET /admin/audit-log`
+
+All protected routes require a valid JWT and enforce role + per-class
+permission checks server-side.
+
+---
+
+## 🔒 Privacy & security notes
+
+- Passwords are bcrypt-hashed; never stored in plaintext.
+- JWTs are signed with `JWT_SECRET` (set a long random value in production).
+- Webcam video and screen frames are **never persisted**. Verification stores
+  only event summaries (type, reason, severity, timestamp).
+- The Anthropic API key is used only by `src/utils/aiVerify.js` on the server.
+  The browser sends a frame to *our* backend, which proxies the check — the key
+  is never shipped to frontend JavaScript.
+- Students see a consent notice before webcam/screen verification and a Privacy
+  page describing exactly what is tracked.
+- Sensitive instructor/admin actions (viewing rosters, changing points,
+  removing students, editing tasks) are written to `audit_logs`.

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyStrike — Student Dashboard</title>
+<link rel="stylesheet" href="/css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4/face_detection.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div><div class="brand-name">StudyStrike</div><div class="brand-sub">Student</div></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-view="overview">📊 Overview</button>
+      <button class="nav-item" data-view="leaderboard">🏆 Leaderboard</button>
+      <button class="nav-item" data-view="tasks">📋 Task Progress</button>
+      <button class="nav-item" data-view="classes">🎓 My Classes</button>
+      <button class="nav-item" data-view="feedback">💬 Instructor Feedback</button>
+      <button class="nav-item" data-view="messages">✉️ Messages <span class="badge-count hidden" id="msgBadge">0</span></button>
+      <button class="nav-item" data-view="privacy">🔒 Privacy</button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="user-mini"><b id="sideName">—</b><span id="sideEmail"></span></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%" onclick="logout()">Sign out</button>
+    </div>
+  </aside>
+
+  <div class="content">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <h1 id="pageTitle">Overview</h1>
+      </div>
+      <div class="topbar-stats">
+        <span class="ts-pill" id="tpStreak">🔥 0</span>
+        <span class="ts-pill" id="tpPoints">⭐ 0</span>
+        <button class="btn btn-gold btn-sm" onclick="openLog()">+ Log Study Session</button>
+      </div>
+    </div>
+
+    <div class="page">
+      <!-- OVERVIEW -->
+      <div class="view active" id="overview">
+        <div class="kpi-grid" id="ovKpis"></div>
+        <div class="card"><div class="sec-title">📌 Pinned announcements</div><div id="ovAnns"></div></div>
+        <div class="card"><div class="sec-title">⏱️ Recent study sessions</div><div id="ovSessions"></div></div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div class="view" id="leaderboard">
+        <div class="toolbar">
+          <label>Class:</label>
+          <select id="lbClass" onchange="loadLeaderboard()"></select>
+        </div>
+        <div class="rewards">
+          <div class="reward"><div class="r-rank">🥇 1st</div><div class="r-bonus">+2% Grade</div><div class="r-desc">Top performer</div></div>
+          <div class="reward"><div class="r-rank">🥈 2nd</div><div class="r-bonus">+1.5%</div><div class="r-desc">Excellent</div></div>
+          <div class="reward"><div class="r-rank">🥉 3rd</div><div class="r-bonus">+1%</div><div class="r-desc">Great effort</div></div>
+          <div class="reward"><div class="r-rank">🌟 Top 10</div><div class="r-bonus">+0.5%</div><div class="r-desc">Keep going</div></div>
+        </div>
+        <div id="lbList"></div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="view" id="tasks"><div id="taskList"></div></div>
+
+      <!-- CLASSES -->
+      <div class="view" id="classes">
+        <div class="card">
+          <div class="sec-title">➕ Join a class</div>
+          <div class="toolbar" style="margin-top:.75rem">
+            <input id="joinCode" placeholder="Class code e.g. SS-CS101A" style="text-transform:uppercase">
+            <button class="btn btn-teal" onclick="joinClass()">Join</button>
+          </div>
+        </div>
+        <div id="classList"></div>
+      </div>
+
+      <!-- FEEDBACK -->
+      <div class="view" id="feedback"><div id="feedbackList"></div></div>
+
+      <!-- MESSAGES -->
+      <div class="view" id="messages">
+        <div class="card">
+          <div class="sec-title">Send a message to an instructor</div>
+          <div class="field" style="margin-top:.75rem"><label>Class</label><select id="msgClass"></select></div>
+          <div class="field"><label>Message</label><textarea id="msgBody" rows="3" placeholder="Type your message…"></textarea></div>
+          <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+        </div>
+        <div id="msgList"></div>
+      </div>
+
+      <!-- PRIVACY -->
+      <div class="view" id="privacy">
+        <div class="card">
+          <div class="sec-title">🔒 What StudyStrike tracks</div>
+          <p style="font-size:13.5px;color:var(--muted);margin-top:.75rem;line-height:1.6">
+            During a focus session we may use your <b>webcam</b> (presence detection only) and optional
+            <b>screen share</b> (content compliance only). <b>No video or screenshots are ever stored or
+            transmitted to your instructor.</b> Frames are analysed momentarily and discarded — only a
+            privacy-safe summary (timestamp, event type, reason) is saved.
+          </p>
+          <ul style="font-size:13px;color:var(--text);margin:1rem 0 0 1.2rem;line-height:1.8">
+            <li>Instructors can see: your points, streaks, task progress, focus % and session summaries.</li>
+            <li>Instructors <b>cannot</b> see: raw webcam video, raw screenshots, your messages to others.</li>
+            <li>Verification events are summaries only (e.g. "face missing for 20s").</li>
+          </ul>
+          <div class="card-head" style="margin-top:1.25rem">
+            <div class="sec-title" style="font-size:13px">My verification events</div>
+          </div>
+          <div id="myEvents"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOG SESSION MODAL -->
+<div class="overlay" id="logOverlay">
+  <div class="modal">
+    <h3>Log a Study Session</h3>
+    <p class="sub">Pick a task and duration. You'll earn points based on verified focus time.</p>
+    <div class="field"><label>Task</label><select id="sessTask"></select></div>
+    <div class="field"><label>Duration (minutes)</label>
+      <select id="sessMins"><option>15</option><option>30</option><option>45</option><option>60</option></select>
+    </div>
+    <div class="consent-box">
+      <label style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer">
+        <input type="checkbox" id="useScreen" checked style="margin-top:3px">
+        <span><b>Enable screen-share content check</b> — an AI verifies (every 30s) that your screen shows
+        study content. Frames are analysed then discarded; only a pass/fail summary is kept.</span>
+      </label>
+    </div>
+    <div class="consent-box">⚠️ By starting you consent to webcam presence detection for this session. No video is stored.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeLog()">Cancel</button>
+      <button class="btn btn-teal" onclick="startSession()">🎯 Start Focus Session →</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOCUS MONITOR MODAL -->
+<div class="overlay" id="focusOverlay">
+  <div class="modal lg">
+    <h3>🎯 Focus Monitor <span id="fmTask" class="pill pill-navy"></span></h3>
+    <p class="sub">Webcam confirms presence; screen share verifies on-task content.</p>
+    <div class="warn-box" id="wFace"><span>⚠️</span><span>No face detected — points paused.</span></div>
+    <div class="warn-box amber" id="wScreen"><span>🖥️</span><span>Screen share stopped — points paused.</span></div>
+    <div class="warn-box amber" id="wContent"><span>🎮</span><span id="wContentText">Off-task content — points paused.</span></div>
+    <div class="cam-section">
+      <div class="feed-box cam"><video id="camFeed" autoplay muted playsinline></video><div class="feed-label">Webcam</div></div>
+      <div class="feed-box" id="screenBox"><video id="screenFeed" autoplay muted playsinline></video><div class="feed-label">Screen</div></div>
+      <div style="flex:1;min-width:170px">
+        <div class="presence waiting" id="presence"><span id="presIco">⏳</span><span id="presText">Initialising…</span></div>
+        <div class="mon-stats">
+          <div class="mon-stat"><div class="l">Present</div><div class="v" id="mPresent">0:00</div></div>
+          <div class="mon-stat"><div class="l">Away</div><div class="v" id="mAway">0:00</div></div>
+          <div class="mon-stat"><div class="l">Focus %</div><div class="v" id="mFocus">—</div></div>
+          <div class="mon-stat"><div class="l">Points</div><div class="v" id="mPts">0</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="spFill" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:.4rem">
+      <span id="spLabel">0:00 / 0:00</span><span id="spStatus">Running</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="endSession(true)">Pause & save</button>
+      <button class="btn btn-danger" onclick="endSession(false)">End Session →</button>
+    </div>
+    <div class="privacy-note"><span>🔒</span><span>Webcam & screen are processed momentarily and never stored. Your instructor only sees focus summaries.</span></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/student.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyStrike — Compete. Excel. Succeed.</title>
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="auth-bg">
+  <div class="auth-card">
+    <div class="ob-logo">
+      <div class="ob-icon">⚡</div>
+      <div>
+        <div class="ob-brand">StudyStrike</div>
+        <div class="ob-tagline">Compete. Excel. Succeed.</div>
+      </div>
+    </div>
+
+    <div class="role-tabs">
+      <button class="role-tab active" data-role="student" onclick="setRole('student')">🎓 Student</button>
+      <button class="role-tab" data-role="instructor" onclick="setRole('instructor')">👩‍🏫 Instructor</button>
+      <button class="role-tab" data-role="admin" onclick="setRole('admin')">🛡️ Admin</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginPane">
+      <h2>Welcome back</h2>
+      <p class="sub" id="loginSub">Sign in to your StudyStrike account.</p>
+      <div class="login-hint" id="demoHint"></div>
+      <div class="field">
+        <label>Email / Username</label>
+        <input id="email" type="text" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="password" type="password" placeholder="••••••••">
+      </div>
+      <div class="err-msg" id="loginErr"></div>
+      <button class="ob-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+      <div class="muted-link">New here? <a onclick="showRegister()">Create an account</a></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerPane" class="hidden">
+      <h2>Create your account</h2>
+      <p class="sub">Join StudyStrike as a student or instructor.</p>
+      <div class="field"><label>Full name</label><input id="rName" type="text" placeholder="Jane Doe"></div>
+      <div class="field"><label>Email</label><input id="rEmail" type="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input id="rPass" type="password" placeholder="At least 6 characters"></div>
+      <div class="field"><label>I am a…</label>
+        <select id="rRole"><option value="student">Student</option><option value="instructor">Instructor</option></select>
+      </div>
+      <div class="err-msg" id="regErr"></div>
+      <button class="ob-btn teal" onclick="doRegister()">Create account →</button>
+      <div class="muted-link">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let role = 'student';
+const HINTS = {
+  student: 'Demo: <code>student@cs101</code> / <code>pass123</code>. Or sign up and join with a class code.',
+  instructor: 'Demo: <code>instructor@studystrike.io</code> / <code>admin123</code>',
+  admin: 'Demo: <code>admin@studystrike.io</code> / <code>admin123</code>',
+};
+function setRole(r){
+  role=r;
+  document.querySelectorAll('.role-tab').forEach(t=>t.classList.toggle('active',t.dataset.role===r));
+  document.getElementById('demoHint').innerHTML=HINTS[r];
+}
+function showRegister(){document.getElementById('loginPane').classList.add('hidden');document.getElementById('registerPane').classList.remove('hidden');}
+function showLogin(){document.getElementById('registerPane').classList.add('hidden');document.getElementById('loginPane').classList.remove('hidden');}
+
+function routeFor(role){return role==='instructor'?'/instructor.html':role==='admin'?'/admin.html':'/student.html';}
+
+async function doLogin(){
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const err=document.getElementById('loginErr'); err.textContent='';
+  const btn=document.getElementById('loginBtn'); btn.disabled=true; btn.textContent='Signing in…';
+  try{
+    const {token,user}=await API.post('/auth/login',{email,password});
+    API.setToken(token);
+    location.href=routeFor(user.role);
+  }catch(e){ err.textContent=e.message; btn.disabled=false; btn.textContent='Sign In →'; }
+}
+
+async function doRegister(){
+  const err=document.getElementById('regErr'); err.textContent='';
+  try{
+    const {token,user}=await API.post('/auth/register',{
+      full_name:document.getElementById('rName').value.trim(),
+      email:document.getElementById('rEmail').value.trim(),
+      password:document.getElementById('rPass').value,
+      role:document.getElementById('rRole').value,
+    });
+    API.setToken(token);
+    location.href=routeFor(user.role);
+  }catch(e){ err.textContent=e.message; }
+}
+
+setRole('student');
+// If already logged in, skip to dashboard.
+(async()=>{ if(API.token){ try{ const {user}=await API.get('/me'); location.href=routeFor(user.role);}catch{} } })();
+document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
