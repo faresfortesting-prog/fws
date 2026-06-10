@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a1e3c"/><stop offset="0.5" stop-color="#0f3460"/><stop offset="1" stop-color="#0d5c70"/>
+    </linearGradient>
+    <radialGradient id="gold" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#f5a623"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <!-- Title -->
+  <text x="64" y="78" fill="#ffffff" font-size="40" font-weight="800">The Golden Circle</text>
+  <text x="64" y="116" fill="#9fc3e8" font-size="20">Why StudyStrike exists — from purpose to product</text>
+
+  <!-- Concentric rings -->
+  <g transform="translate(420,400)">
+    <circle r="270" fill="none" stroke="#2e72b8" stroke-width="2" opacity="0.5"/>
+    <circle r="185" fill="none" stroke="#14a085" stroke-width="2" opacity="0.6"/>
+    <circle r="100" fill="url(#gold)"/>
+    <text y="-150" text-anchor="middle" fill="#9fc3e8" font-size="22" font-weight="700" letter-spacing="3">WHAT</text>
+    <text y="-66" text-anchor="middle" fill="#14a085" font-size="22" font-weight="700" letter-spacing="3">HOW</text>
+    <text y="-6" text-anchor="middle" fill="#0f3460" font-size="30" font-weight="800" letter-spacing="3">WHY</text>
+    <text y="34" text-anchor="middle" fill="#0f3460" font-size="15" font-weight="600">Start the purpose</text>
+  </g>
+
+  <!-- Callouts -->
+  <g font-size="17" fill="#e8f1fb">
+    <!-- WHY -->
+    <line x1="520" y1="400" x2="760" y2="250" stroke="#f5a623" stroke-width="2"/>
+    <text x="772" y="232" fill="#ffd166" font-size="22" font-weight="800">WHY</text>
+    <text x="772" y="262">No student should fail a course they were</text>
+    <text x="772" y="286">capable of passing simply because they</text>
+    <text x="772" y="310">couldn't start on time. Procrastination is an</text>
+    <text x="772" y="334">emotional problem — not a knowledge gap.</text>
+
+    <!-- HOW -->
+    <line x1="560" y1="430" x2="772" y2="430" stroke="#14a085" stroke-width="2"/>
+    <text x="772" y="404" fill="#3fe0bd" font-size="22" font-weight="800">HOW</text>
+    <text x="772" y="434">Real stakes — study behaviour tied to actual</text>
+    <text x="772" y="458">grade bonuses · Verified focus — webcam/screen</text>
+    <text x="772" y="482">presence so points are earned, not gamed ·</text>
+    <text x="772" y="506">Live per-course competition that builds habit.</text>
+
+    <!-- WHAT -->
+    <line x1="520" y1="470" x2="760" y2="600" stroke="#2e72b8" stroke-width="2"/>
+    <text x="772" y="576" fill="#9fc3e8" font-size="22" font-weight="800">WHAT</text>
+    <text x="772" y="606">A gamified academic platform: leaderboard,</text>
+    <text x="772" y="630">streaks, smart task prioritiser, grade predictions,</text>
+    <text x="772" y="654">a verified Focus Monitor, and an instructor dashboard.</text>
+  </g>
+</svg>
