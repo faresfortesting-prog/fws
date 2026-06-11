@@ -63,6 +63,17 @@ async function loadClasses() {
 
 async function loadTasks() {
   MY_TASKS = await API.get('/students/me/tasks');
+  // Order: active upcoming first (soonest due at top), then overdue, then completed.
+  const today = new Date().toISOString().slice(0, 10);
+  const rank = t => t.my_status === 'completed' ? 3
+    : (t.due_date && t.due_date < today ? 2 : 0);   // 0 = upcoming/active, 2 = overdue
+  MY_TASKS.sort((a, b) => {
+    const ra = rank(a), rb = rank(b);
+    if (ra !== rb) return ra - rb;
+    const da = a.due_date || '9999-12-31', db = b.due_date || '9999-12-31';
+    return ra === 2 ? db.localeCompare(da)   // overdue: most recent first
+                    : da.localeCompare(db);  // upcoming/completed: soonest first
+  });
   const sel = document.getElementById('sessTask');
   sel.innerHTML = MY_TASKS.map(t => `<option value="${t.id}">${esc(t.title)} (${esc(t.class_name)})</option>`).join('')
     || '<option value="">No tasks — join a class first</option>';
