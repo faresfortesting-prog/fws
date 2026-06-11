@@ -38,11 +38,10 @@ const seed = db.transaction(() => {
   // Students (demo)
   const students = [
     ['Mohamed Fares', 'mohamed.fares@adu.ac.ae', 'Innovation & Entrepreneurship', 3, 300, 5],
-    ['Alex Nguyen', 'student@cs101', 'Computer Science', 1, 320, 6],
-    ['Sarah Al-Rashidi', 'student@math401', 'Mathematics', 4, 540, 9],
-    ['Carlos Mendez', 'student@chem301', 'Chemistry', 3, 410, 4],
-    ['Jordan Smith', 'jordan@studystrike.io', 'Computer Science', 2, 280, 3],
-    ['Morgan Lee', 'morgan@studystrike.io', 'Computer Science', 2, 460, 7],
+    ['Ayman Hanoun', 'ayman@adu.ac.ae', 'Innovation & Entrepreneurship', 3, 540, 9],
+    ['Omar Mahmoud', 'omar@adu.ac.ae', 'Innovation & Entrepreneurship', 3, 410, 4],
+    ['Faisal Ahmed', 'faisal@adu.ac.ae', 'Innovation & Entrepreneurship', 3, 280, 3],
+    ['Ahmed Nabil', 'ahmed@adu.ac.ae', 'Innovation & Entrepreneurship', 3, 460, 7],
   ];
   const studentIds = students.map(([name, email, major, yr, pts, streak]) => {
     const id = insUser.run(name, email, hashPassword('pass123'), 'student', 'active').lastInsertRowid;
@@ -73,10 +72,10 @@ const seed = db.transaction(() => {
   ensurePermissions(instrId, csClass);
   ensurePermissions(instrId, mathClass);
 
-  // Enrollments — Mohamed, Alex, Jordan, Morgan in CS; Sarah in MATH (indices shifted by Mohamed at 0)
+  // Enrollments — Fares, Ayman, Omar, Faisal in CS; Ahmed in MATH
   const enroll = db.prepare("INSERT INTO class_enrollments (class_id, student_id, enrollment_status) VALUES (?, ?, 'active')");
-  [studentIds[0], studentIds[1], studentIds[4], studentIds[5]].forEach(sid => enroll.run(csClass, sid));
-  enroll.run(mathClass, studentIds[2]);
+  [studentIds[0], studentIds[1], studentIds[2], studentIds[3]].forEach(sid => enroll.run(csClass, sid));
+  enroll.run(mathClass, studentIds[4]);
 
   // Tasks
   const insTask = db.prepare(
@@ -118,7 +117,7 @@ seed();
 console.log('✓ Seed complete.');
 console.log('  Admin:      admin@studystrike.io / admin123');
 console.log('  Instructor: instructor@studystrike.io / admin123');
-console.log('  Students:   student@cs101 / student@math401 / student@chem301 (pass123)');
+console.log('  Students (pass123): ayman@adu.ac.ae · omar@adu.ac.ae · faisal@adu.ac.ae · ahmed@adu.ac.ae');
 console.log('  Your account: mohamed.fares@adu.ac.ae / pass123 (Blackboard link pre-filled)');
 console.log('  Demo class codes: SS-CS101A, SS-MTH401');
 process.exit(0);
