@@ -23,6 +23,9 @@ function migrate() {
   if (!cols.includes('blackboard_ics_url')) {
     db.exec('ALTER TABLE student_profiles ADD COLUMN blackboard_ics_url TEXT');
   }
+  if (!cols.includes('blackboard_last_sync')) {
+    db.exec('ALTER TABLE student_profiles ADD COLUMN blackboard_last_sync TEXT');
+  }
 }
 
 module.exports = { db, migrate, dbPath };

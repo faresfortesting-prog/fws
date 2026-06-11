@@ -43,3 +43,14 @@ app.use((err, _req, res, _next) => {
 app.listen(config.port, () => {
   console.log(`StudyStrike running → http://localhost:${config.port}  (${config.nodeEnv})`);
 });
+
+// ── Auto-refresh: periodically re-sync every saved Blackboard feed ──
+if (config.blackboardAutoSync) {
+  const { syncAll } = require('./services/blackboard');
+  const INTERVAL = config.blackboardSyncHours * 3600 * 1000;
+  const run = () => syncAll()
+    .then(r => { if (r.imported) console.log(`Blackboard auto-sync: +${r.imported} deadline(s) across ${r.students} student(s)`); })
+    .catch(() => {});
+  setTimeout(run, 30 * 1000);          // first run shortly after boot
+  setInterval(run, INTERVAL);          // then on a fixed interval
+}

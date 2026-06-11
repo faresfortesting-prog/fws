@@ -189,12 +189,21 @@ async function importBlackboard() {
   finally { btn.disabled = false; btn.textContent = 'Import deadlines'; }
 }
 
-// Prefill the Blackboard field with any previously saved link.
+// Prefill the Blackboard field and auto-sync deadlines in the background on login,
+// so imported deadlines appear directly without the student clicking anything.
 async function prefillBlackboard() {
   try {
     const { ics_url } = await API.get('/students/me/blackboard-url');
-    if (ics_url) document.getElementById('bbUrl').value = ics_url;
-  } catch {}
+    if (!ics_url) return;
+    document.getElementById('bbUrl').value = ics_url;
+    // Silent background refresh.
+    const r = await API.post('/students/import-blackboard', { ics_url });
+    if (r.imported > 0) {
+      toast(`Synced ${r.imported} new deadline${r.imported === 1 ? '' : 's'} from Blackboard`, 'success');
+      await Promise.all([loadClasses(), loadTasks()]);
+      loadOverview();
+    }
+  } catch { /* offline or feed unreachable — stay silent */ }
 }
 
 async function sendMessage() {

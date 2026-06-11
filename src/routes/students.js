@@ -3,119 +3,29 @@ const express = require('express');
 const { db } = require('../db');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { audit, instructorOwnsClass, hasPermission, nonEmpty } = require('../utils/helpers');
-const { parseICS } = require('../utils/ics');
+const { syncStudent } = require('../services/blackboard');
 
 const router = express.Router();
 router.use(requireAuth);
-
-// Ensure the shared "Blackboard Sync" system instructor + course exist; return ids.
-function ensureBlackboardSystem() {
-  let inst = db.prepare("SELECT id FROM users WHERE email = 'blackboard-sync@studystrike.io'").get();
-  if (!inst) {
-    const info = db.prepare(
-      "INSERT INTO users (full_name, email, password_hash, role, status) VALUES ('Blackboard Sync', 'blackboard-sync@studystrike.io', 'x', 'instructor', 'active')"
-    ).run();
-    inst = { id: info.lastInsertRowid };
-    db.prepare('INSERT INTO instructor_profiles (user_id, department) VALUES (?, ?)').run(inst.id, 'Integrations');
-  }
-  let course = db.prepare("SELECT id FROM courses WHERE course_code = 'BB-IMPORT'").get();
-  if (!course) {
-    const info = db.prepare(
-      "INSERT INTO courses (course_code, course_name, description, created_by_instructor_id) VALUES ('BB-IMPORT', 'Blackboard Imported Deadlines', 'Auto-synced from a Blackboard calendar feed.', ?)"
-    ).run(inst.id);
-    course = { id: info.lastInsertRowid };
-  }
-  return { instructorId: inst.id, courseId: course.id };
-}
-
-// Slugify a course label into a short, code-safe token.
-function slug(s) {
-  return (s || 'general').toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 12) || 'GENERAL';
-}
-
-// Ensure a per-student class for a specific course/subject; return its id.
-// Each distinct Blackboard course becomes its own StudyStrike class so deadlines
-// are grouped by subject (e.g. "CHEM 301", "FWS310") instead of one big bucket.
-function ensureCourseClass(studentId, instructorId, courseLabel) {
-  const label = courseLabel || 'Other Blackboard Deadlines';
-  const code = 'BB-' + studentId + '-' + slug(label);
-
-  // Course row (shared system course per label).
-  let course = db.prepare('SELECT id FROM courses WHERE created_by_instructor_id = ? AND course_name = ?')
-    .get(instructorId, label);
-  if (!course) {
-    const info = db.prepare(
-      "INSERT INTO courses (course_code, course_name, description, created_by_instructor_id) VALUES (?, ?, 'Imported from Blackboard.', ?)"
-    ).run(slug(label), label, instructorId);
-    course = { id: info.lastInsertRowid };
-  }
-
-  let cls = db.prepare('SELECT id FROM classes WHERE join_code = ?').get(code);
-  if (!cls) {
-    const info = db.prepare(
-      "INSERT INTO classes (course_id, instructor_id, class_name, join_code, status) VALUES (?, ?, ?, ?, 'active')"
-    ).run(course.id, instructorId, label, code);
-    cls = { id: info.lastInsertRowid };
-  }
-  const enrolled = db.prepare('SELECT 1 FROM class_enrollments WHERE class_id = ? AND student_id = ?').get(cls.id, studentId);
-  if (!enrolled) {
-    db.prepare("INSERT INTO class_enrollments (class_id, student_id, enrollment_status) VALUES (?, ?, 'active')").run(cls.id, studentId);
-  }
-  return { classId: cls.id, courseId: course.id };
-}
 
 // POST /students/import-blackboard — fetch a Blackboard .ics feed and import deadlines as tasks.
 router.post('/import-blackboard', requireRole('student'), async (req, res) => {
   const url = (req.body && req.body.ics_url || '').trim();
   if (!/^https?:\/\//i.test(url))
     return res.status(400).json({ error: 'Please provide a valid Blackboard calendar (.ics) link' });
-
-  // Fetch the feed server-side (the key/token lives in the URL the student pasted).
-  let raw;
   try {
-    const resp = await fetch(url, { headers: { 'User-Agent': 'StudyStrike/1.0' } });
-    if (!resp.ok) return res.status(502).json({ error: `Blackboard returned HTTP ${resp.status}` });
-    raw = await resp.text();
+    const result = await syncStudent(req.user.id, url);
+    audit(req.user.id, 'import_blackboard', 'user', req.user.id, result);
+    res.json({ imported: result.imported, total_events: result.total, subjects: result.subjects });
   } catch (e) {
-    return res.status(502).json({ error: 'Could not reach the calendar URL. Check the link and your connection.' });
+    res.status(502).json({ error: e.message || 'Could not import from Blackboard' });
   }
-  if (!/BEGIN:VCALENDAR/i.test(raw))
-    return res.status(422).json({ error: 'That link did not return a valid calendar feed.' });
-
-  const events = parseICS(raw).filter(e => e.due_date);
-  const { instructorId } = ensureBlackboardSystem();
-
-  // Group each deadline into its own subject's class.
-  const findTask = db.prepare('SELECT id FROM tasks WHERE class_id = ? AND title = ? AND IFNULL(due_date,\'\') = ?');
-  const insTask = db.prepare(
-    `INSERT INTO tasks (class_id, course_id, instructor_id, title, description, task_type, points, due_date, urgency, status)
-     VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, 'published')`
-  );
-  let imported = 0;
-  const subjects = new Set();
-  const classCache = {};
-  const tx = db.transaction(() => {
-    for (const e of events) {
-      const key = e.course || 'Other Blackboard Deadlines';
-      subjects.add(key);
-      if (!classCache[key]) classCache[key] = ensureCourseClass(req.user.id, instructorId, e.course);
-      const { classId, courseId } = classCache[key];
-      if (findTask.get(classId, e.title, e.due_date)) continue;
-      insTask.run(classId, courseId, instructorId, e.title, e.description || null, e.task_type, e.due_date, e.urgency);
-      imported++;
-    }
-    db.prepare('UPDATE student_profiles SET blackboard_ics_url = ? WHERE user_id = ?').run(url, req.user.id);
-  });
-  tx();
-
-  audit(req.user.id, 'import_blackboard', 'user', req.user.id, { events: events.length, imported, subjects: [...subjects] });
-  res.json({ imported, total_events: events.length, subjects: [...subjects] });
 });
 
-// GET /students/me/blackboard-url — the saved feed URL (to prefill the import field).
+// GET /students/me/blackboard-url — the saved feed URL + last sync (to prefill the import field).
 router.get('/me/blackboard-url', requireRole('student'), (req, res) => {
-  const row = db.prepare('SELECT blackboard_ics_url FROM student_profiles WHERE user_id = ?').get(req.user.id);
-  res.json({ ics_url: row ? row.blackboard_ics_url : null });
+  const row = db.prepare('SELECT blackboard_ics_url, blackboard_last_sync FROM student_profiles WHERE user_id = ?').get(req.user.id);
+  res.json({ ics_url: row ? row.blackboard_ics_url : null, last_sync: row ? row.blackboard_last_sync : null });
 });
 
 // Can the requester view this student's detail?

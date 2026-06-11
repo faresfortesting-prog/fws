@@ -31,4 +31,6 @@ module.exports = {
   seedDemoData: (process.env.SEED_DEMO_DATA || 'true') !== 'false',
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
   anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+  blackboardAutoSync: (process.env.BLACKBOARD_AUTO_SYNC || 'true') !== 'false',
+  blackboardSyncHours: parseFloat(process.env.BLACKBOARD_SYNC_HOURS) || 6,
 };
