@@ -95,7 +95,18 @@ router.get('/me/tasks', requireRole('student'), (req, res) => {
      JOIN class_enrollments e ON e.class_id = t.class_id
      LEFT JOIN student_task_progress p ON p.task_id = t.id AND p.student_id = ?
      WHERE e.student_id = ? AND e.enrollment_status='active' AND t.status='published'
-     ORDER BY t.due_date IS NULL, t.due_date ASC`
+     ORDER BY
+       -- 0 = upcoming/active (top), 2 = overdue, 3 = completed (bottom)
+       CASE WHEN COALESCE(p.status,'not_started')='completed' THEN 3
+            WHEN t.due_date IS NOT NULL AND t.due_date < date('now') THEN 2
+            ELSE 0 END ASC,
+       -- overdue group: most recently passed first
+       CASE WHEN t.due_date IS NOT NULL AND t.due_date < date('now')
+                 AND COALESCE(p.status,'not_started')<>'completed'
+            THEN julianday(t.due_date) END DESC,
+       -- upcoming/completed group: soonest due first
+       t.due_date IS NULL,
+       t.due_date ASC`
   ).all(req.user.id, req.user.id);
   // Compute overdue state.
   const now = new Date();
