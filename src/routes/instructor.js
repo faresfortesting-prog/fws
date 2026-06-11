@@ -203,6 +203,22 @@ router.patch('/courses/:id', (req, res) => {
   res.json(db.prepare('SELECT * FROM courses WHERE id = ?').get(id));
 });
 
+// GET /instructor/calendar — all upcoming task deadlines across the instructor's classes
+router.get('/calendar', (req, res) => {
+  const classIds = instructorClassIds(req.user);
+  if (classIds.length === 0) return res.json([]);
+  const ph = classIds.map(() => '?').join(',');
+  const rows = db.prepare(
+    `SELECT t.id, t.title, t.due_date, t.task_type, t.urgency, t.points, c.class_name,
+            (SELECT COUNT(*) FROM student_task_progress p WHERE p.task_id = t.id AND p.status='completed') AS completed,
+            (SELECT COUNT(*) FROM class_enrollments e WHERE e.class_id = t.class_id AND e.enrollment_status='active') AS enrolled
+     FROM tasks t JOIN classes c ON c.id = t.class_id
+     WHERE t.class_id IN (${ph}) AND t.due_date IS NOT NULL AND t.status='published'
+     ORDER BY t.due_date ASC`
+  ).all(...classIds);
+  res.json(rows);
+});
+
 // GET /instructor/verification-events — privacy-safe verification review feed
 router.get('/verification-events', (req, res) => {
   const classIds = instructorClassIds(req.user);

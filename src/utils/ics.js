@@ -31,6 +31,27 @@ function detectType(title) {
   return 'assignment';
 }
 
+// Try to identify the course/subject this event belongs to.
+// Blackboard feeds vary, so we check several common locations in priority order.
+function detectCourse(props, title) {
+  const desc = props.DESCRIPTION || '';
+  // 1) CATEGORIES field (Blackboard often puts the course here)
+  if (props.CATEGORIES && props.CATEGORIES.trim()) return clean(props.CATEGORIES.split(',')[0]);
+  // 2) "Course: X" inside the description
+  const dm = desc.match(/course[:\s-]+([^\\\n;]+)/i);
+  if (dm) return clean(dm[1]);
+  // 3) A course code like "CHEM 301", "CS101", "FWS310" in summary or description
+  const code = (title + ' ' + desc).match(/\b[A-Z]{2,4}\s?\d{3}[A-Z]?\b/);
+  if (code) return code[0].replace(/\s+/g, ' ').toUpperCase();
+  // 4) Blackboard summaries are frequently "Item title - Course Name"
+  if (title.includes(' - ')) {
+    const tail = title.split(' - ').pop();
+    if (tail && tail.length > 3 && tail.length < 60) return clean(tail);
+  }
+  return null; // unknown → caller groups under a generic bucket
+}
+function clean(s) { return (s || '').replace(/[()]/g, '').trim(); }
+
 // Urgency from how many days until due.
 function urgencyFromDate(dueISO) {
   if (!dueISO) return 'low';
@@ -68,6 +89,7 @@ function parseICS(raw) {
       description: unescape(props.DESCRIPTION),
       task_type: detectType(title),
       urgency: urgencyFromDate(due),
+      course: detectCourse(props, title),   // subject this deadline belongs to (or null)
     });
   }
   return events;

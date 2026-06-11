@@ -13,6 +13,7 @@
       <div><div class="brand-name">StudyStrike</div><div class="brand-sub">Instructor</div></div></div>
     <nav class="nav">
       <button class="nav-item active" data-view="overview">📊 Overview</button>
+      <button class="nav-item" data-view="calendar">📅 Calendar</button>
       <button class="nav-item" data-view="classes">🏫 Classes</button>
       <button class="nav-item" data-view="courses">📚 Courses</button>
       <button class="nav-item" data-view="tasks">📋 Tasks</button>
@@ -42,6 +43,21 @@
     <div class="page">
       <div class="view active" id="overview"><div class="kpi-grid" id="ovKpis"></div>
         <div class="card"><div class="sec-title">🏆 Top students</div><div id="ovLeaders"></div></div></div>
+
+      <div class="view" id="calendar">
+        <div class="card">
+          <div class="card-head">
+            <div class="sec-title">📅 Deadline Calendar</div>
+            <div class="toolbar" style="margin:0">
+              <button class="btn btn-ghost btn-sm" onclick="calMonth(-1)">‹</button>
+              <strong id="calLabel" style="min-width:150px;text-align:center"></strong>
+              <button class="btn btn-ghost btn-sm" onclick="calMonth(1)">›</button>
+            </div>
+          </div>
+          <div id="calGrid"></div>
+        </div>
+        <div class="card"><div class="sec-title">⏳ Upcoming deadlines</div><div id="calAgenda"></div></div>
+      </div>
 
       <div class="view" id="classes"><div id="classList"></div></div>
       <div class="view" id="courses">

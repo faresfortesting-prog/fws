@@ -18,7 +18,7 @@ function showView(name) {
   document.getElementById(name).classList.add('active');
   document.getElementById('pageTitle').textContent = name.charAt(0).toUpperCase() + name.slice(1);
   document.getElementById('sidebar').classList.remove('open');
-  ({ overview: loadOverview, classes: renderClasses, courses: renderCourses, tasks: loadTasks,
+  ({ overview: loadOverview, calendar: loadCalendar, classes: renderClasses, courses: renderCourses, tasks: loadTasks,
      students: loadStudents, verification: loadVerification, points: loadPointStudents,
      announcements: loadAnnouncements, messages: loadMessages, reports: renderReportControls, audit: loadAudit }[name] || (() => {}))();
 }
@@ -53,6 +53,56 @@ async function loadOverview() {
       <div class="lb-avatar">${initials(r.name)}</div><div class="lb-info"><div class="lb-name">${esc(r.name)}</div>
       <div class="lb-streak">🔥 ${r.streak}-day streak</div></div><div class="lb-pts">${(r.points || 0).toLocaleString()}</div></div>`).join('')
     : empty('🏆', 'No students yet', 'Create a class and share its code.');
+}
+
+// ── Calendar ──
+let CAL_EVENTS = [], calRef = new Date();
+async function loadCalendar() {
+  try { CAL_EVENTS = await API.get('/instructor/calendar'); }
+  catch { CAL_EVENTS = []; }
+  // Soonest deadline first; open the calendar on the month of the next upcoming deadline.
+  CAL_EVENTS.sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const next = CAL_EVENTS.find(e => e.due_date >= todayStr) || CAL_EVENTS[0];
+  calRef = next ? new Date(next.due_date) : new Date();
+  renderCalendar();
+}
+function calMonth(delta) { calRef.setMonth(calRef.getMonth() + delta); renderCalendar(); }
+function renderCalendar() {
+  const y = calRef.getFullYear(), m = calRef.getMonth();
+  document.getElementById('calLabel').textContent =
+    calRef.toLocaleString('default', { month: 'long', year: 'numeric' });
+  // Bucket events by YYYY-MM-DD
+  const byDay = {};
+  CAL_EVENTS.forEach(e => { (byDay[e.due_date] = byDay[e.due_date] || []).push(e); });
+
+  const first = new Date(y, m, 1).getDay();
+  const days = new Date(y, m + 1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let html = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-head">${d}</div>`).join('');
+  for (let i = 0; i < first; i++) html += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= days; d++) {
+    const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const evs = byDay[ds] || [];
+    const shown = evs.slice(0, 2).map(e =>
+      `<div class="cal-ev urg-${e.urgency}" title="${esc(e.title)} — ${esc(e.class_name)}">${esc(e.title)}</div>`).join('');
+    const more = evs.length > 2 ? `<div class="cal-more">+${evs.length - 2} more</div>` : '';
+    html += `<div class="cal-cell ${ds === todayStr ? 'today' : ''}">
+      <div class="cal-daynum">${d}</div>${shown}${more}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+
+  // Agenda: upcoming, from today
+  const upcoming = CAL_EVENTS.filter(e => e.due_date >= todayStr).slice(0, 12);
+  document.getElementById('calAgenda').innerHTML = upcoming.length
+    ? `<table><tr><th>Due</th><th>Deadline</th><th>Class</th><th>Type</th><th>Completion</th></tr>` +
+      upcoming.map(e => {
+        const rate = e.enrolled ? Math.round(e.completed / e.enrolled * 100) : 0;
+        return `<tr><td><b>${new Date(e.due_date).toLocaleDateString()}</b></td><td>${esc(e.title)}</td>
+          <td>${esc(e.class_name)}</td><td><span class="pill pill-navy">${esc(e.task_type)}</span></td>
+          <td>${rate}%</td></tr>`;
+      }).join('') + '</table>'
+    : empty('📅', 'No upcoming deadlines', 'Tasks with due dates appear here.');
 }
 
 // ── Classes ──
