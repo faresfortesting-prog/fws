@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS student_profiles (
   daily_study_goal INTEGER NOT NULL DEFAULT 120,  -- minutes/day
   total_points     INTEGER NOT NULL DEFAULT 0,
   current_streak   INTEGER NOT NULL DEFAULT 0,
-  last_active_at   TEXT
+  last_active_at   TEXT,
+  blackboard_ics_url TEXT
 );
 
 -- ── InstructorProfiles: extra fields for instructor users ──

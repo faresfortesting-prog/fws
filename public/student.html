@@ -77,6 +77,17 @@
             <button class="btn btn-teal" onclick="joinClass()">Join</button>
           </div>
         </div>
+        <div class="card">
+          <div class="sec-title">🎓 Import from Blackboard</div>
+          <p style="font-size:12.5px;color:var(--muted);margin:.4rem 0 .75rem">
+            Paste your Blackboard calendar (.ics) link — your assignments &amp; deadlines import automatically as tasks.
+            <br>In Blackboard: <strong>Calendar → Get External Calendar Link</strong>.
+          </p>
+          <div class="toolbar" style="margin-top:.25rem">
+            <input id="bbUrl" placeholder="https://blackboard.adu.ac.ae/.../learn.ics" style="min-width:420px">
+            <button class="btn btn-primary" onclick="importBlackboard()" id="bbBtn">Import deadlines</button>
+          </div>
+        </div>
         <div id="classList"></div>
       </div>
 

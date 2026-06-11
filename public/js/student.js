@@ -8,6 +8,7 @@ async function boot() {
   document.getElementById('sideEmail').textContent = ME.email;
   setupNav();
   await Promise.all([loadProfile(), loadClasses(), loadTasks(), loadMessages()]);
+  prefillBlackboard();
   showView('overview');
 }
 
@@ -172,6 +173,28 @@ async function joinClass() {
     document.getElementById('joinCode').value = '';
     await Promise.all([loadClasses(), loadTasks()]);
   } catch (e) { toast(e.message, 'error'); }
+}
+
+async function importBlackboard() {
+  const url = document.getElementById('bbUrl').value.trim();
+  if (!url) return toast('Paste your Blackboard .ics link first', 'error');
+  const btn = document.getElementById('bbBtn');
+  btn.disabled = true; btn.textContent = 'Importing…';
+  try {
+    const r = await API.post('/students/import-blackboard', { ics_url: url });
+    toast(`Imported ${r.imported} deadline${r.imported === 1 ? '' : 's'} from Blackboard`, 'success');
+    await Promise.all([loadClasses(), loadTasks()]);
+    showView('tasks');
+  } catch (e) { toast(e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Import deadlines'; }
+}
+
+// Prefill the Blackboard field with any previously saved link.
+async function prefillBlackboard() {
+  try {
+    const { ics_url } = await API.get('/students/me/blackboard-url');
+    if (ics_url) document.getElementById('bbUrl').value = ics_url;
+  } catch {}
 }
 
 async function sendMessage() {

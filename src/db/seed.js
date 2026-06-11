@@ -37,6 +37,7 @@ const seed = db.transaction(() => {
 
   // Students (demo)
   const students = [
+    ['Mohamed Fares', 'mohamed.fares@adu.ac.ae', 'Innovation & Entrepreneurship', 3, 300, 5],
     ['Alex Nguyen', 'student@cs101', 'Computer Science', 1, 320, 6],
     ['Sarah Al-Rashidi', 'student@math401', 'Mathematics', 4, 540, 9],
     ['Carlos Mendez', 'student@chem301', 'Chemistry', 3, 410, 4],
@@ -51,6 +52,10 @@ const seed = db.transaction(() => {
       .run(id, 'S' + (100000 + id), major, 'Year ' + yr, 120, pts, streak);
     return id;
   });
+
+  // Pre-fill Mohamed Fares' Blackboard calendar link so the import field is ready.
+  db.prepare("UPDATE student_profiles SET blackboard_ics_url = ? WHERE user_id = ?")
+    .run('https://blackboard.adu.ac.ae/webapps/calendar/calendarFeed/af98769662854edd943f16a139b01a9c/learn.ics', studentIds[0]);
 
   // Courses
   const insCourse = db.prepare(
@@ -68,11 +73,10 @@ const seed = db.transaction(() => {
   ensurePermissions(instrId, csClass);
   ensurePermissions(instrId, mathClass);
 
-  // Enrollments — first three students in CS, plus Sarah in MATH
+  // Enrollments — Mohamed, Alex, Jordan, Morgan in CS; Sarah in MATH (indices shifted by Mohamed at 0)
   const enroll = db.prepare("INSERT INTO class_enrollments (class_id, student_id, enrollment_status) VALUES (?, ?, 'active')");
-  [studentIds[0], studentIds[3], studentIds[4]].forEach(sid => enroll.run(csClass, sid));
-  enroll.run(mathClass, studentIds[1]);
-  enroll.run(csClass, studentIds[2]);
+  [studentIds[0], studentIds[1], studentIds[4], studentIds[5]].forEach(sid => enroll.run(csClass, sid));
+  enroll.run(mathClass, studentIds[2]);
 
   // Tasks
   const insTask = db.prepare(
@@ -115,5 +119,6 @@ console.log('✓ Seed complete.');
 console.log('  Admin:      admin@studystrike.io / admin123');
 console.log('  Instructor: instructor@studystrike.io / admin123');
 console.log('  Students:   student@cs101 / student@math401 / student@chem301 (pass123)');
+console.log('  Your account: mohamed.fares@adu.ac.ae / pass123 (Blackboard link pre-filled)');
 console.log('  Demo class codes: SS-CS101A, SS-MTH401');
 process.exit(0);
