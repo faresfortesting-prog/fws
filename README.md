@@ -1,5 +1,14 @@
 # ⚡ StudyStrike — Full-Stack Academic Dashboard
 
+### 🚀 One-click deploy
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/faresfortesting-prog/fws/tree/claude/pensive-allen-mufkfw)
+
+Click the button → sign in with GitHub → **Apply**. Render reads `render.yaml`,
+builds the app, seeds the team accounts, and gives you a public URL.
+(See [Deploy to a live URL](#️-deploy-to-a-live-url-render--free) for details.)
+
+
 A production-ready student / instructor / admin dashboard system. Students log
 gamified, focus-verified study sessions; instructors manage classes, tasks,
 points and privacy-safe verification; admins manage the whole platform.
