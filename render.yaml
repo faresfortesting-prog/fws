@@ -1,0 +1,28 @@
+# Render Blueprint — deploys StudyStrike as a free web service.
+# In Render: New ▸ Blueprint ▸ connect this repo. Render reads this file.
+services:
+  - type: web
+    name: studystrike
+    runtime: node
+    plan: free
+    branch: claude/pensive-allen-mufkfw
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20.18.0"
+      - key: JWT_SECRET
+        generateValue: true        # Render generates a strong secret
+      - key: SEED_DEMO_DATA
+        value: "true"              # seed the team accounts on first boot
+      - key: BLACKBOARD_AUTO_SYNC
+        value: "true"
+      - key: BLACKBOARD_SYNC_HOURS
+        value: "6"
+      # Optional — set in the Render dashboard, never commit a real key:
+      # - key: ANTHROPIC_API_KEY
+      #   sync: false
